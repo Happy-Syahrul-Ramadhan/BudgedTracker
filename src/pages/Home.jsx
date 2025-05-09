@@ -1,81 +1,7 @@
-// Function to import data from Excel file
-const importFromExcel = (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  
-  reader.onload = async (e) => {
-    try {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-      
-      // Get the first sheet
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
-      
-      // Convert to JSON
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
-      
-      // Format data to match application format
-      const formattedData = jsonData.map(item => ({
-        id: item.ID || Date.now().toString() + Math.random().toString(36).substr(2, 5),
-        type: item.Tipe,
-        amount: parseFloat(item.Jumlah || 0),
-        description: item.Keterangan || 'Tidak ada keterangan',
-        date: item.Tanggal || new Date().toISOString().split('T')[0]
-      }));
-      
-      // Save to both storages
-      try {
-        localStorage.setItem('transactions', JSON.stringify(formattedData));
-      } catch (localStorageError) {
-        console.error("Error saving to localStorage:", localStorageError);
-      }
-      
-      await saveToIndexedDB(formattedData);
-      
-      // Update state with imported data
-      setTransactions(formattedData);
-      
-      // Update last operation status
-      setLastExcelOperation({
-        type: 'import',
-        time: new Date(),
-        status: 'success'
-      });
-      
-      showAlert({
-        title: 'Import Berhasil',
-        text: 'Data berhasil diimpor dari Excel',
-        icon: 'success'
-      });
-    } catch (error) {
-      console.error('Error importing from Excel:', error);
-      
-      // Update last operation status
-      setLastExcelOperation({
-        type: 'import',
-        time: new Date(),
-        status: 'error'
-      });
-      
-      showAlert({
-        title: 'Import Gagal',
-        text: 'Gagal mengimpor data dari Excel: ' + error.message,
-        icon: 'error'
-      });
-    }
-  };
-  
-  reader.readAsArrayBuffer(file);
-  
-  // Reset file input
-  event.target.value = '';
-};// Home.jsx
+// Home.jsx with Reset Data and Delete Transaction Features
 import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/navbar/NavbarBottom';
-import { ArrowUpIcon, ArrowDownIcon, ChartBarIcon, CreditCardIcon, CalendarIcon, PlusIcon } from '@heroicons/react/24/solid';
+import { ArrowUpIcon, ArrowDownIcon, ChartBarIcon, CreditCardIcon, CalendarIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/solid';
 import * as XLSX from 'xlsx'; // Import SheetJS
 import Swal from 'sweetalert2'; // Import SweetAlert2
 
@@ -292,6 +218,24 @@ useEffect(() => {
       .catch(error => {
         console.error("Error in IndexedDB save:", error);
       });
+  } else {
+    // If there are no transactions, clear storage
+    try {
+      localStorage.removeItem('transactions');
+      console.log("Data removed from localStorage");
+    } catch (error) {
+      console.error("Error removing from localStorage:", error);
+    }
+    
+    try {
+      initIndexedDB().then(db => {
+        const transaction = db.transaction(["transactions"], "readwrite");
+        const store = transaction.objectStore("transactions");
+        store.clear();
+      });
+    } catch (error) {
+      console.error("Error clearing IndexedDB:", error);
+    }
   }
 }, [transactions, initialLoadComplete]);
 
@@ -437,7 +381,11 @@ const importFromExcel = (event) => {
         status: 'success'
       });
       
-      alert('Data berhasil diimpor dari Excel');
+      showAlert({
+        title: 'Import Berhasil',
+        text: 'Data berhasil diimpor dari Excel',
+        icon: 'success'
+      });
     } catch (error) {
       console.error('Error importing from Excel:', error);
       
@@ -448,7 +396,11 @@ const importFromExcel = (event) => {
         status: 'error'
       });
       
-      alert('Gagal mengimpor data dari Excel: ' + error.message);
+      showAlert({
+        title: 'Import Gagal',
+        text: 'Gagal mengimpor data dari Excel: ' + error.message,
+        icon: 'error'
+      });
     }
   };
   
@@ -602,6 +554,104 @@ const addTransaction = async () => {
   }
 };
 
+// NEW FUNCTION: Delete a transaction
+const deleteTransaction = async (transactionId) => {
+  // Show confirmation alert
+  const result = await showAlert({
+    title: 'Konfirmasi Hapus',
+    text: 'Apakah Anda yakin ingin menghapus transaksi ini?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Ya, Hapus',
+    cancelButtonText: 'Batal'
+  });
+  
+  if (result.isConfirmed) {
+    try {
+      // Filter out the transaction with the given ID
+      const updatedTransactions = transactions.filter(t => t.id !== transactionId);
+      
+      // Save to localStorage
+      try {
+        localStorage.setItem('transactions', JSON.stringify(updatedTransactions));
+        console.log("Updated transactions saved to localStorage after deletion");
+      } catch (localStorageError) {
+        console.error("Error saving to localStorage after deletion:", localStorageError);
+      }
+      
+      // Save to IndexedDB
+      const dbSaveResult = await saveToIndexedDB(updatedTransactions);
+      console.log("IndexedDB save result after deletion:", dbSaveResult);
+      
+      // Update state
+      setTransactions(updatedTransactions);
+      
+      // Show success message
+      showAlert({
+        title: 'Transaksi Dihapus',
+        text: 'Transaksi berhasil dihapus.',
+        icon: 'success'
+      });
+    } catch (error) {
+      console.error("Error deleting transaction:", error);
+      showAlert({
+        title: 'Gagal Menghapus',
+        text: `Terjadi kesalahan saat menghapus transaksi: ${error.message}`,
+        icon: 'error'
+      });
+    }
+  }
+};
+
+// NEW FUNCTION: Reset all data
+const resetAllData = async () => {
+  // Show confirmation alert with extra warning
+  const result = await showAlert({
+    title: 'Reset Semua Data?',
+    text: 'PERINGATAN: Semua data transaksi akan dihapus secara permanen dan tidak dapat dikembalikan!',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Ya, Reset Semua',
+    cancelButtonText: 'Batal',
+    confirmButtonColor: '#DC2626', // red-600
+  });
+  
+  if (result.isConfirmed) {
+    try {
+      // Clear localStorage
+      localStorage.removeItem('transactions');
+      
+      // Clear IndexedDB
+      const db = await initIndexedDB();
+      const transaction = db.transaction(["transactions"], "readwrite");
+      const store = transaction.objectStore("transactions");
+      store.clear();
+      
+      // Clear state
+      setTransactions([]);
+      setFilteredTransactions([]);
+      setCategoryData({ income: [], expense: [] });
+      setBalance(0);
+      setIncome(0);
+      setExpense(0);
+      
+      // Show success message
+      showAlert({
+        title: 'Data Direset',
+        text: 'Semua data transaksi telah dihapus.',
+        icon: 'success'
+      });
+    } catch (error) {
+      console.error("Error resetting data:", error);
+      showAlert({
+        title: 'Reset Gagal',
+        text: `Terjadi kesalahan saat mereset data: ${error.message}`,
+        icon: 'error'
+      });
+    }
+  }
+};
+
 // Trigger file input click for import
 const handleImportClick = () => {
   fileInputRef.current.click();
@@ -669,6 +719,7 @@ return (
             <button 
               className="bg-blue-600 hover:bg-blue-700 transition-colors p-3 rounded-lg flex flex-col items-center text-white"
               onClick={handleImportClick}
+              disabled
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -685,6 +736,15 @@ return (
               <span className="text-sm font-medium">Export ke Excel</span>
             </button>
           </div>
+          
+          {/* Reset Data Button - NEW */}
+          <button 
+            className="w-full bg-red-600 hover:bg-red-700 transition-colors p-3 rounded-lg flex justify-center items-center text-white mt-3"
+            onClick={resetAllData}
+          >
+            <TrashIcon className="h-5 w-5 mr-2" />
+            <span className="text-sm font-medium">Reset Semua Data</span>
+          </button>
           
           {/* Hidden file input */}
           <input 
@@ -981,9 +1041,19 @@ return (
                     <p className="text-xs text-gray-400">{formatDate(transaction.date)}</p>
                   </div>
                 </div>
-                <p className={`${transaction.type === 'Pemasukan' ? 'text-green-300' : 'text-red-300'} font-medium`}>
-                  {transaction.type === 'Pemasukan' ? '+' : '-'}{formatCurrency(transaction.amount)}
-                </p>
+                <div className="flex items-center">
+                  <p className={`${transaction.type === 'Pemasukan' ? 'text-green-300' : 'text-red-300'} font-medium mr-4`}>
+                    {transaction.type === 'Pemasukan' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                  </p>
+                  {/* Delete Button - NEW */}
+                  <button 
+                    className="p-1 bg-gray-600 hover:bg-red-600 rounded-full transition-colors"
+                    onClick={() => deleteTransaction(transaction.id)}
+                    title="Hapus transaksi"
+                  >
+                    <TrashIcon className="w-4 h-4 text-gray-300" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -1084,6 +1154,8 @@ return (
               <p>4. Gunakan tombol 'Export ke Excel' untuk menyimpan data ke file Excel secara manual</p>
               <p>5. Lihat ringkasan keuangan dan grafik untuk melacak pengeluaran Anda</p>
               <p>6. Gunakan filter periode untuk melihat transaksi pada rentang waktu tertentu</p>
+              <p>7. Klik ikon sampah di sebelah transaksi untuk menghapus transaksi tersebut</p>
+              <p>8. Gunakan tombol 'Reset Semua Data' untuk menghapus seluruh data transaksi</p>
             </div>
           `,
           icon: 'info',

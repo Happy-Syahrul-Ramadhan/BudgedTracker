@@ -29,7 +29,7 @@ const BottomNavbar = () => {
                 : 'text-gray-500 dark:text-gray-400'
             }`}
           >
-            Statistics
+            AI Asisten
           </span>
         </Link>
         
