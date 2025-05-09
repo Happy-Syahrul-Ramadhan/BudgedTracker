@@ -15,7 +15,7 @@ const [showAddModal, setShowAddModal] = useState(false);
 const [transactionType, setTransactionType] = useState('');
 const [amount, setAmount] = useState('');
 const [description, setDescription] = useState('');
-const [transactionDate, setTransactionDate] = useState(new Date().toISOString().split('T')[0]);
+// const [transactionDate, setTransactionDate] = useState(new Date().toISOString().split('T')[0]);
 const [periodFilter, setPeriodFilter] = useState('Semua');
 const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
 const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
@@ -27,6 +27,11 @@ const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
 // Refs
 const fileInputRef = useRef(null);
+
+// Format current date as YYYY-MM-DD for the date input
+  const today = new Date();
+  const formattedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const [transactionDate, setTransactionDate] = useState(formattedDate);
 
 // Fungsi helper untuk alert dengan styling konsisten
 const showAlert = (options) => {
