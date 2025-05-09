@@ -29,7 +29,7 @@ const BottomNavbar = () => {
                 : 'text-gray-500 dark:text-gray-400'
             }`}
           >
-            AI Asisten
+            Tanya AI
           </span>
         </Link>
         
@@ -50,7 +50,7 @@ const BottomNavbar = () => {
                 : 'text-gray-500 dark:text-gray-400'
             }`}
           >
-            Home
+            Beranda
           </span>
         </Link>
         
@@ -75,7 +75,7 @@ const BottomNavbar = () => {
                 : 'text-gray-500 dark:text-gray-400'
             }`}
           >
-            Contact
+            Hubungi
           </span>
         </Link>
       </div>

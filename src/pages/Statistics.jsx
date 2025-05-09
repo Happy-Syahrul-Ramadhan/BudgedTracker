@@ -283,7 +283,7 @@ ${financialSummary.recentTransactions.map(t =>
       <Navbar/>
       <div className="max-w-[480px] mx-auto bg-black text-white p-6 font-bold flex flex-col min-h-screen overflow-auto">
         <div className="w-full">
-          <h1 className="text-2xl text-center text-blue-500 mb-6">AI Asisten</h1>
+          <h1 className="text-2xl text-center text-blue-500 mb-6">Tanya AI</h1>
           
           {/* Financial Data Status */}
           <div className="mb-4 text-center">
