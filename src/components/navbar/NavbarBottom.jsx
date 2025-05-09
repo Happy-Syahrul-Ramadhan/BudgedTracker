@@ -55,7 +55,8 @@ const BottomNavbar = () => {
         </Link>
         
         {/* Contact Button */}
-        <button 
+        <Link
+          to="/contact"
           type="button" 
           className="inline-flex flex-col items-center justify-center px-5 hover:bg-gray-50 dark:hover:bg-gray-800 group"
           onClick={() => setActiveTab('contact')}
@@ -76,7 +77,7 @@ const BottomNavbar = () => {
           >
             Contact
           </span>
-        </button>
+        </Link>
       </div>
     </div>
   );
