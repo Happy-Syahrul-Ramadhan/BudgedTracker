@@ -687,6 +687,7 @@ const formatTime = (date) => {
   });
 };
 
+
 // Generate random colors for pie chart
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FF6B6B', '#6B88FF'];
 
@@ -1021,50 +1022,55 @@ return (
       {/* Recent Transactions */}
       <div className="w-full max-w-[460px] mb-20">
         <div className="flex justify-between items-center mb-3">
-          <h3 className="text-lg font-semibold text-purple-300">Transaksi Terbaru</h3>
+          <h3 className="text-lg font-semibold text-purple-300">Transaksi Hari Ini</h3>
         </div>
         
         {filteredTransactions.length > 0 ? (
           <div className="space-y-3">
-            {filteredTransactions.slice(0, 10).map((transaction) => (
-              <div 
-                key={transaction.id} 
-                className={`bg-gray-700 rounded-lg p-3 flex justify-between items-center shadow-sm border-l-4 ${
-                  transaction.type === 'Pemasukan' ? 'border-green-400' : 'border-red-400'
-                }`}
-              >
-                <div className="flex items-center">
-                  <div className="bg-gray-600 p-2 rounded-full mr-3">
-                    {transaction.type === 'Pemasukan' ? (
-                      <ArrowUpIcon className="w-4 h-4 text-green-300" />
-                    ) : (
-                      <ArrowDownIcon className="w-4 h-4 text-red-300" />
-                    )}
+            {filteredTransactions
+              .filter((transaction) => {
+                // Check if the transaction date matches today's date
+                return transaction.date === transactionDate;
+              })
+              .slice(0, 10)
+              .map((transaction) => (
+                <div 
+                  key={transaction.id} 
+                  className={`bg-gray-700 rounded-lg p-3 flex justify-between items-center shadow-sm border-l-4 ${
+                    transaction.type === 'Pemasukan' ? 'border-green-400' : 'border-red-400'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <div className="bg-gray-600 p-2 rounded-full mr-3">
+                      {transaction.type === 'Pemasukan' ? (
+                        <ArrowUpIcon className="w-4 h-4 text-green-300" />
+                      ) : (
+                        <ArrowDownIcon className="w-4 h-4 text-red-300" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-200">{transaction.description}</p>
+                      <p className="text-xs text-gray-400">{formatDate(transaction.date)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-200">{transaction.description}</p>
-                    <p className="text-xs text-gray-400">{formatDate(transaction.date)}</p>
+                  <div className="flex items-center">
+                    <p className={`${transaction.type === 'Pemasukan' ? 'text-green-300' : 'text-red-300'} font-medium mr-4`}>
+                      {transaction.type === 'Pemasukan' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                    </p>
+                    <button 
+                      className="p-1 bg-gray-600 hover:bg-red-600 rounded-full transition-colors"
+                      onClick={() => deleteTransaction(transaction.id)}
+                      title="Hapus transaksi"
+                    >
+                      <TrashIcon className="w-4 h-4 text-gray-300" />
+                    </button>
                   </div>
                 </div>
-                <div className="flex items-center">
-                  <p className={`${transaction.type === 'Pemasukan' ? 'text-green-300' : 'text-red-300'} font-medium mr-4`}>
-                    {transaction.type === 'Pemasukan' ? '+' : '-'}{formatCurrency(transaction.amount)}
-                  </p>
-                  {/* Delete Button - NEW */}
-                  <button 
-                    className="p-1 bg-gray-600 hover:bg-red-600 rounded-full transition-colors"
-                    onClick={() => deleteTransaction(transaction.id)}
-                    title="Hapus transaksi"
-                  >
-                    <TrashIcon className="w-4 h-4 text-gray-300" />
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))}
           </div>
         ) : (
           <div className="bg-gray-700 rounded-lg p-6 text-center">
-            <p className="text-gray-400 mb-3">Belum ada transaksi yang tercatat</p>
+            <p className="text-gray-400 mb-3">Belum ada transaksi hari ini</p>
             <button 
               className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg flex items-center justify-center mx-auto"
               onClick={() => {
