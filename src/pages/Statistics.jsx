@@ -17,11 +17,11 @@ const TypingAnimation = () => {
   }, []);
   
   return (
-    <div className="mt-[-50px] mb-20">
-      <h2 className="text-lg mb-2 text-blue-300">AI Berfikir</h2>
+    <div className="mt-[-70px] mb-20">
+      <h2 className="text-sm mb-2 text-blue-300">AI Sedang Berfikir..</h2>
       <div className="p-6 bg-gray-800 rounded-lg border-l-4 border-blue-500 flex items-start">
         <div className="flex items-center">
-          <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center mr-3">
+          <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center mr-3">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>

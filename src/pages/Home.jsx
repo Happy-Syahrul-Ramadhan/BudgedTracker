@@ -14,7 +14,7 @@ const [income, setIncome] = useState(0);
 const [expense, setExpense] = useState(0);
 const [showAddModal, setShowAddModal] = useState(false);
 const [transactionType, setTransactionType] = useState('');
-const [showBalance, setShowBalance] = useState(true); // New state for balance visibility
+// const [showBalance, setShowBalance] = useState(true); // New state for balance visibility
 const [amount, setAmount] = useState('');
 const [description, setDescription] = useState('');
 const [periodFilter, setPeriodFilter] = useState('3 Hari Terakhir'); // Default to 3 days
@@ -30,6 +30,18 @@ const [transactionCountData, setTransactionCountData] = useState([]); // New sta
 
 // Refs
 const fileInputRef = useRef(null);
+
+// Perubahan pada state showBalance
+const [showBalance, setShowBalance] = useState(() => {
+  // Mengambil setting dari localStorage saat pertama kali load
+  const savedShowBalance = localStorage.getItem('showBalance');
+  return savedShowBalance !== null ? JSON.parse(savedShowBalance) : true;
+});
+
+// Effect untuk menyimpan state showBalance ke localStorage setiap kali berubah
+useEffect(() => {
+  localStorage.setItem('showBalance', JSON.stringify(showBalance));
+}, [showBalance]);
 
 // Format current date and time as YYYY-MM-DD HH:MM:SS for the datetime input
 const getCurrentDateTime = () => {
