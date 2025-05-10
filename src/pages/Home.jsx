@@ -1,9 +1,10 @@
-// Home.jsx with Reset Data and Delete Transaction Features
+// Home.jsx with Reset Data, Delete Transaction, MultiLine Chart and Timestamp Features
 import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/navbar/NavbarBottom';
 import { ArrowUpIcon, ArrowDownIcon, ChartBarIcon, CreditCardIcon, CalendarIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/solid';
 import * as XLSX from 'xlsx'; // Import SheetJS
 import Swal from 'sweetalert2'; // Import SweetAlert2
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts'; // Import Recharts components
 
 const Home = () => {
 // State management
@@ -15,23 +16,44 @@ const [showAddModal, setShowAddModal] = useState(false);
 const [transactionType, setTransactionType] = useState('');
 const [amount, setAmount] = useState('');
 const [description, setDescription] = useState('');
-// const [transactionDate, setTransactionDate] = useState(new Date().toISOString().split('T')[0]);
-const [periodFilter, setPeriodFilter] = useState('Semua');
-const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
+const [periodFilter, setPeriodFilter] = useState('3 Hari Terakhir'); // Default to 3 days
+const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 3)).toISOString().split('T')[0]);
 const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
 const [filteredTransactions, setFilteredTransactions] = useState([]);
 const [categoryData, setCategoryData] = useState({ income: [], expense: [] });
 const [showIncomeCategoryChart, setShowIncomeCategoryChart] = useState(true);
 const [lastExcelOperation, setLastExcelOperation] = useState({ type: '', time: null, status: '' });
 const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+const [chartData, setChartData] = useState([]); // State for chart data
+const [transactionCountData, setTransactionCountData] = useState([]); // New state for transaction count data
 
 // Refs
 const fileInputRef = useRef(null);
 
-// Format current date as YYYY-MM-DD for the date input
-  const today = new Date();
-  const formattedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  const [transactionDate, setTransactionDate] = useState(formattedDate);
+// Format current date and time as YYYY-MM-DD HH:MM:SS for the datetime input
+const getCurrentDateTime = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+};
+
+// Initialize transaction date with current date and time
+const [transactionDate, setTransactionDate] = useState(getCurrentDateTime());
+
+// Update transaction date every second
+useEffect(() => {
+  const timer = setInterval(() => {
+    setTransactionDate(getCurrentDateTime());
+  }, 1000);
+  
+  return () => clearInterval(timer);
+}, []);
 
 // Fungsi helper untuk alert dengan styling konsisten
 const showAlert = (options) => {
@@ -183,7 +205,7 @@ useEffect(() => {
           type: t.type || 'Pengeluaran',
           amount: parseFloat(t.amount || 0),
           description: t.description || 'Tidak ada keterangan',
-          date: t.date || new Date().toISOString().split('T')[0]
+          date: t.date || new Date().toISOString()
         }));
         
         setTransactions(validatedTransactions);
@@ -244,6 +266,87 @@ useEffect(() => {
   }
 }, [transactions, initialLoadComplete]);
 
+// Prepare data for multi-line chart - showing 3 days by default
+const prepareChartData = () => {
+  if (filteredTransactions.length === 0) return [];
+  
+  // Group transactions by date
+  const groupedByDate = {};
+  
+  filteredTransactions.forEach(transaction => {
+    // Extract just the date part for grouping
+    const datePart = transaction.date.split('T')[0];
+    
+    if (!groupedByDate[datePart]) {
+      groupedByDate[datePart] = {
+        date: datePart,
+        Pemasukan: 0,
+        Pengeluaran: 0
+      };
+    }
+    
+    if (transaction.type === 'Pemasukan') {
+      groupedByDate[datePart].Pemasukan += transaction.amount;
+    } else {
+      groupedByDate[datePart].Pengeluaran += transaction.amount;
+    }
+  });
+  
+  // Convert to array and sort by date
+  const chartData = Object.values(groupedByDate).sort((a, b) => 
+    new Date(a.date) - new Date(b.date)
+  );
+  
+  // Format dates for display
+  chartData.forEach(item => {
+    const date = new Date(item.date);
+    item.displayDate = `${date.getDate()}/${date.getMonth() + 1}`;
+  });
+  
+  return chartData;
+};
+
+// NEW: Prepare data for transaction count chart
+const prepareTransactionCountData = () => {
+  if (filteredTransactions.length === 0) return [];
+  
+  // Group transactions by date
+  const groupedByDate = {};
+  
+  filteredTransactions.forEach(transaction => {
+    // Extract just the date part for grouping
+    const datePart = transaction.date.split('T')[0];
+    
+    if (!groupedByDate[datePart]) {
+      groupedByDate[datePart] = {
+        date: datePart,
+        PemasukanCount: 0,
+        PengeluaranCount: 0,
+        displayDate: ''
+      };
+    }
+    
+    if (transaction.type === 'Pemasukan') {
+      groupedByDate[datePart].PemasukanCount += 1;
+    } else {
+      groupedByDate[datePart].PengeluaranCount += 1;
+    }
+  });
+  
+  // Convert to array and sort by date
+  const countData = Object.values(groupedByDate).sort((a, b) => 
+    new Date(a.date) - new Date(b.date)
+  );
+  
+  // Format dates for display
+  countData.forEach(item => {
+    const date = new Date(item.date);
+    item.displayDate = `${date.getDate()}/${date.getMonth() + 1}`;
+  });
+  
+  return countData;
+};
+
 // Calculate totals and filter transactions when transactions or period filter changes
 useEffect(() => {
   if (transactions.length > 0) {
@@ -253,8 +356,25 @@ useEffect(() => {
   } else {
     setFilteredTransactions([]);
     setCategoryData({ income: [], expense: [] });
+    setChartData([]);
+    setTransactionCountData([]);
   }
 }, [transactions, periodFilter, startDate, endDate]);
+
+// Update chart data when filtered transactions change
+useEffect(() => {
+  if (filteredTransactions.length > 0) {
+    const newChartData = prepareChartData();
+    setChartData(newChartData);
+    
+    // NEW: Update transaction count data
+    const newCountData = prepareTransactionCountData();
+    setTransactionCountData(newCountData);
+  } else {
+    setChartData([]);
+    setTransactionCountData([]);
+  }
+}, [filteredTransactions]);
 
 // Calculate financial totals
 const calculateTotals = () => {
@@ -278,7 +398,14 @@ const applyDateFilter = () => {
   if (periodFilter !== 'Semua') {
     const today = new Date();
     
-    if (periodFilter === 'Minggu ini') {
+    if (periodFilter === '3 Hari Terakhir') {
+      // Last 3 days
+      const threeDaysAgo = new Date(today);
+      threeDaysAgo.setDate(today.getDate() - 3);
+      threeDaysAgo.setHours(0, 0, 0, 0);
+      
+      filtered = filtered.filter(t => new Date(t.date) >= threeDaysAgo);
+    } else if (periodFilter === 'Minggu ini') {
       // Start of the week (Monday)
       const startOfWeek = new Date(today);
       startOfWeek.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1));
@@ -295,6 +422,8 @@ const applyDateFilter = () => {
       filtered = filtered.filter(t => new Date(t.date) >= startOfYear);
     } else if (periodFilter === 'Kustom') {
       const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999); // Include the end date
       
@@ -373,7 +502,7 @@ const importFromExcel = (event) => {
         type: item.Tipe,
         amount: parseFloat(item.Jumlah || 0),
         description: item.Keterangan || 'Tidak ada keterangan',
-        date: item.Tanggal || new Date().toISOString().split('T')[0]
+        date: item.Tanggal || new Date().toISOString()
       }));
       
       // Update state with imported data
@@ -445,7 +574,7 @@ const exportToExcel = (dataToExport = transactions) => {
       { wch: 12 }, // Tipe
       { wch: 15 }, // Jumlah
       { wch: 25 }, // Keterangan
-      { wch: 12 }  // Tanggal
+      { wch: 20 }  // Tanggal (expanded to accommodate timestamp)
     ];
     ws['!cols'] = colWidths;
     
@@ -515,7 +644,7 @@ const addTransaction = async () => {
     type: transactionType,
     amount: parseFloat(amount),
     description,
-    date: transactionDate
+    date: transactionDate // Now includes full timestamp
   };
   
   try {
@@ -540,7 +669,7 @@ const addTransaction = async () => {
     // Reset form
     setAmount('');
     setDescription('');
-    setTransactionDate(new Date().toISOString().split('T')[0]);
+    setTransactionDate(getCurrentDateTime()); // Reset to current date/time
     setShowAddModal(false);
     
     // Show success message
@@ -559,7 +688,7 @@ const addTransaction = async () => {
   }
 };
 
-// NEW FUNCTION: Delete a transaction
+// Delete a transaction
 const deleteTransaction = async (transactionId) => {
   // Show confirmation alert
   const result = await showAlert({
@@ -608,7 +737,7 @@ const deleteTransaction = async (transactionId) => {
   }
 };
 
-// NEW FUNCTION: Reset all data
+// Reset all data
 const resetAllData = async () => {
   // Show confirmation alert with extra warning
   const result = await showAlert({
@@ -639,6 +768,8 @@ const resetAllData = async () => {
       setBalance(0);
       setIncome(0);
       setExpense(0);
+      setChartData([]);
+      setTransactionCountData([]);
       
       // Show success message
       showAlert({
@@ -677,8 +808,27 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('id-ID', options);
 };
 
+// Format time
+const formatTime = (dateString) => {
+  const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+  return new Date(dateString).toLocaleTimeString('id-ID', options);
+};
+
+// Format date and time for display
+const formatDateTime = (dateString) => {
+  try {
+    const date = new Date(dateString);
+    const formattedDate = formatDate(date);
+    const formattedTime = formatTime(date);
+    return `${formattedDate}, ${formattedTime}`;
+  } catch (error) {
+    console.error("Error formatting date:", error, dateString);
+    return dateString || "Invalid Date";
+  }
+};
+
 // Format time for last operation display
-const formatTime = (date) => {
+const formatOperationTime = (date) => {
   if (!date) return '';
   return new Date(date).toLocaleTimeString('id-ID', { 
     hour: '2-digit', 
@@ -687,6 +837,15 @@ const formatTime = (date) => {
   });
 };
 
+// Check if a transaction is from today
+const isToday = (dateString) => {
+  const today = new Date();
+  const transactionDate = new Date(dateString);
+  
+  return today.getDate() === transactionDate.getDate() &&
+    today.getMonth() === transactionDate.getMonth() &&
+    today.getFullYear() === transactionDate.getFullYear();
+};
 
 // Generate random colors for pie chart
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FF6B6B', '#6B88FF'];
@@ -725,7 +884,6 @@ return (
             <button 
               className="bg-blue-600 hover:bg-blue-700 transition-colors p-3 rounded-lg flex flex-col items-center text-white"
               onClick={handleImportClick}
-              disabled
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -743,7 +901,7 @@ return (
             </button>
           </div>
           
-          {/* Reset Data Button - NEW */}
+          {/* Reset Data Button */}
           <button 
             className="w-full bg-red-600 hover:bg-red-700 transition-colors p-3 rounded-lg flex justify-center items-center text-white mt-3"
             onClick={resetAllData}
@@ -769,7 +927,7 @@ return (
                 : 'bg-red-900 text-red-200'
             }`}>
               <p>
-                {lastExcelOperation.type === 'import' ? 'Import' : 'Export'} terakhir: {formatDate(lastExcelOperation.time)} {formatTime(lastExcelOperation.time)} - 
+                {lastExcelOperation.type === 'import' ? 'Import' : 'Export'} terakhir: {formatDate(lastExcelOperation.time)} {formatOperationTime(lastExcelOperation.time)} - 
                 {lastExcelOperation.status === 'success' ? ' Berhasil' : ' Gagal'}
               </p>
             </div>
@@ -785,6 +943,7 @@ return (
             className="bg-gray-700 hover:bg-gray-600 transition-colors p-4 rounded-lg flex flex-col items-center text-green-300 border border-green-500"
             onClick={() => {
               setTransactionType('Pemasukan');
+              setTransactionDate(getCurrentDateTime()); // Update to current time
               setShowAddModal(true);
             }}
           >
@@ -795,6 +954,7 @@ return (
             className="bg-gray-700 hover:bg-gray-600 transition-colors p-4 rounded-lg flex flex-col items-center text-red-300 border border-red-500"
             onClick={() => {
               setTransactionType('Pengeluaran');
+              setTransactionDate(getCurrentDateTime()); // Update to current time
               setShowAddModal(true);
             }}
           >
@@ -814,6 +974,7 @@ return (
             value={periodFilter}
             onChange={(e) => setPeriodFilter(e.target.value)}
           >
+            <option value="3 Hari Terakhir">3 Hari Terakhir</option>
             <option value="Semua">Semua</option>
             <option value="Minggu ini">Minggu ini</option>
             <option value="Bulan ini">Bulan ini</option>
@@ -874,34 +1035,63 @@ return (
         </div>
       )}
 
-      {/* Trend Chart (Simplified) */}
-      {filteredTransactions.length > 1 && (
+      {/* Multi-Line Chart */}
+      {chartData.length > 0 && (
         <div className="w-full max-w-[460px] mb-6">
-          <h3 className="text-lg font-semibold mb-3 text-purple-300">Tren Keuangan</h3>
+          <h3 className="text-lg font-semibold mb-3 text-purple-300">Grafik Pemasukan vs Pengeluaran</h3>
           <div className="bg-gray-700 rounded-lg p-4">
             <div className="text-center mb-4">
-              <p className="text-sm text-gray-400">Statistik Transaksi per Periode</p>
+              <p className="text-sm text-gray-400">Tren Pemasukan & Pengeluaran per Hari</p>
             </div>
             
-            <div className="flex justify-between items-end h-40 mt-6 px-2">
-              {[...Array(Math.min(5, filteredTransactions.length))].map((_, index) => {
-                const transaction = filteredTransactions[index];
-                const maxHeight = 120;
-                const height = transaction.amount / 
-                  Math.max(...filteredTransactions.slice(0, 5).map(t => t.amount)) * maxHeight;
-                
-                return (
-                  <div key={index} className="flex flex-col items-center">
-                    <div 
-                      className={`w-8 rounded-t-md ${transaction.type === 'Pemasukan' ? 'bg-green-500' : 'bg-red-500'}`}
-                      style={{ height: `${height}px` }}
-                    ></div>
-                    <div className="text-xs text-gray-400 mt-2 w-16 text-center overflow-hidden text-ellipsis whitespace-nowrap">
-                      {formatDate(transaction.date).split(' ').slice(0, 2).join(' ')}
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="w-full h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={chartData}
+                  margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                  <XAxis 
+                    dataKey="displayDate" 
+                    stroke="#aaa" 
+                    tick={{ fill: '#aaa', fontSize: 12 }}
+                  />
+                  <YAxis 
+                    stroke="#aaa" 
+                    tick={{ fill: '#aaa', fontSize: 12 }}
+                    tickFormatter={(value) => new Intl.NumberFormat('id-ID', {
+                      notation: 'compact',
+                      compactDisplay: 'short'
+                    }).format(value)}
+                  />
+                  <Tooltip 
+                    formatter={(value) => [formatCurrency(value), ""]}
+                    labelFormatter={(label) => `Tanggal: ${label}`}
+                    contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '4px' }}
+                    itemStyle={{ color: '#fff' }}
+                    labelStyle={{ color: '#9ca3af' }}
+                  />
+                  <Legend wrapperStyle={{ paddingTop: 10, fontSize: 12 }} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="Pemasukan" 
+                    stroke="#10B981" 
+                    strokeWidth={2}
+                    dot={{ r: 4, fill: '#10B981', stroke: '#10B981' }}
+                    activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }}
+                    name="Pemasukan"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="Pengeluaran" 
+                    stroke="#EF4444" 
+                    strokeWidth={2}
+                    dot={{ r: 4, fill: '#EF4444', stroke: '#EF4444' }}
+                    activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }}
+                    name="Pengeluaran"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
             
             <div className="flex justify-between mt-4">
@@ -912,6 +1102,70 @@ return (
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-red-500 mr-2 rounded"></div>
                 <span className="text-xs text-gray-300">Pengeluaran</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Transaction Count Bar Chart - NEW */}
+      {transactionCountData.length > 0 && (
+        <div className="w-full max-w-[460px] mb-6">
+          <h3 className="text-lg font-semibold mb-3 text-purple-300">Jumlah Transaksi per Hari</h3>
+          <div className="bg-gray-700 rounded-lg p-4">
+            <div className="text-center mb-4">
+              <p className="text-sm text-gray-400">Jumlah Transaksi Pemasukan & Pengeluaran</p>
+            </div>
+            
+            <div className="w-full h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={transactionCountData}
+                  margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                  <XAxis 
+                    dataKey="displayDate" 
+                    stroke="#aaa" 
+                    tick={{ fill: '#aaa', fontSize: 12 }}
+                  />
+                  <YAxis 
+                    stroke="#aaa" 
+                    tick={{ fill: '#aaa', fontSize: 12 }}
+                    tickFormatter={(value) => Math.round(value)}
+                  />
+                  <Tooltip 
+                    formatter={(value) => [`${value} transaksi`, ""]}
+                    labelFormatter={(label) => `Tanggal: ${label}`}
+                    contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '4px' }}
+                    itemStyle={{ color: '#fff' }}
+                    labelStyle={{ color: '#9ca3af' }}
+                  />
+                  <Legend wrapperStyle={{ paddingTop: 10, fontSize: 12 }} />
+                  <Bar 
+                    dataKey="PemasukanCount" 
+                    fill="#10B981" 
+                    name="Jumlah Pemasukan"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar 
+                    dataKey="PengeluaranCount" 
+                    fill="#EF4444" 
+                    name="Jumlah Pengeluaran"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            
+            <div className="flex justify-between mt-4">
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-green-500 mr-2 rounded"></div>
+                <span className="text-xs text-gray-300">Jumlah Pemasukan</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-red-500 mr-2 rounded"></div>
+                <span className="text-xs text-gray-300">Jumlah Pengeluaran</span>
               </div>
             </div>
           </div>
@@ -1022,16 +1276,12 @@ return (
       {/* Recent Transactions */}
       <div className="w-full max-w-[460px] mb-20">
         <div className="flex justify-between items-center mb-3">
-          <h3 className="text-lg font-semibold text-purple-300">Transaksi Hari Ini</h3>
+          <h3 className="text-lg font-semibold text-purple-300">Transaksi Terbaru</h3>
         </div>
         
         {filteredTransactions.length > 0 ? (
           <div className="space-y-3">
             {filteredTransactions
-              .filter((transaction) => {
-                // Check if the transaction date matches today's date
-                return transaction.date === transactionDate;
-              })
               .slice(0, 10)
               .map((transaction) => (
                 <div 
@@ -1050,7 +1300,7 @@ return (
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-200">{transaction.description}</p>
-                      <p className="text-xs text-gray-400">{formatDate(transaction.date)}</p>
+                      <p className="text-xs text-gray-400">{formatDateTime(transaction.date)}</p>
                     </div>
                   </div>
                   <div className="flex items-center">
@@ -1070,7 +1320,7 @@ return (
           </div>
         ) : (
           <div className="bg-gray-700 rounded-lg p-6 text-center">
-            <p className="text-gray-400 mb-3">Belum ada transaksi hari ini</p>
+            <p className="text-gray-400 mb-3">Belum ada transaksi</p>
             <button 
               className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg flex items-center justify-center mx-auto"
               onClick={() => {
@@ -1120,13 +1370,14 @@ return (
           </div>
           
           <div className="mb-6">
-            <label className="block text-sm text-gray-300 mb-1">Tanggal</label>
+            <label className="block text-sm text-gray-300 mb-1">Tanggal & Waktu</label>
             <input 
-              type="date" 
+              type="datetime-local" 
               className="w-full bg-gray-700 text-gray-200 p-2 rounded border border-gray-600"
               value={transactionDate}
               onChange={(e) => setTransactionDate(e.target.value)}
             />
+            <p className="text-xs text-gray-400 mt-1">Waktu saat ini sudah diisi otomatis</p>
           </div>
           
           <div className="flex justify-end space-x-3">
@@ -1167,6 +1418,9 @@ return (
               <p>6. Gunakan filter periode untuk melihat transaksi pada rentang waktu tertentu</p>
               <p>7. Klik ikon sampah di sebelah transaksi untuk menghapus transaksi tersebut</p>
               <p>8. Gunakan tombol 'Reset Semua Data' untuk menghapus seluruh data transaksi</p>
+              <p>9. Perhatikan grafik multi-line untuk membandingkan tren pemasukan dan pengeluaran</p>
+              <p>10. Lihat grafik bar untuk melihat jumlah transaksi per hari</p>
+              <p>11. Filter default menampilkan 3 hari terakhir, Anda dapat mengubahnya sesuai kebutuhan</p>
             </div>
           `,
           icon: 'info',
