@@ -1,6 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/navbar/NavbarBottom';
 
+// Komponen animasi mengetik
+const TypingAnimation = () => {
+  const [dots, setDots] = useState('');
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDots(prev => {
+        if (prev.length >= 3) return '';
+        return prev + '.';
+      });
+    }, 400);
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  return (
+    <div className="mt-[-50px] mb-20">
+      <h2 className="text-lg mb-2 text-blue-300">AI Berfikir</h2>
+      <div className="p-6 bg-gray-800 rounded-lg border-l-4 border-blue-500 flex items-start">
+        <div className="flex items-center">
+          <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center mr-3">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div className="typing-animation">
+            <span className="inline-block align-middle h-3 w-3 bg-blue-400 rounded-full mr-1 animate-pulse"></span>
+            <span className="inline-block align-middle h-3 w-3 bg-blue-400 rounded-full mr-1 animate-pulse delay-100"></span>
+            <span className="inline-block align-middle h-3 w-3 bg-blue-400 rounded-full animate-pulse delay-200"></span>
+            <span className="font-medium text-gray-300 ml-2">Berfikirr{dots}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Statistics = () => {
   const [query, setQuery] = useState('');
   const [response, setResponse] = useState('');
@@ -188,6 +225,7 @@ const Statistics = () => {
     
     setLoading(true);
     setError('');
+    setResponse(''); // Clear previous response
     
     try {
       // Generate data context for AI
@@ -260,6 +298,8 @@ ${financialSummary.recentTransactions.map(t =>
       }
 
       const data = await res.json();
+      
+      // Menampilkan respons karakter per karakter dengan efek mengetik
       setResponse(data.choices[0].message.content);
     } catch (err) {
       setError(`Error: ${err.message || 'Something went wrong'}`);
@@ -338,7 +378,7 @@ ${financialSummary.recentTransactions.map(t =>
             </div>
           </div>
           
-          <div className="mb-20">
+          <div className="mb-20 mt-10">
             <p className="text-sm text-gray-400 mb-3">Tanyakan Apa saja tentang Financial</p>
             <textarea 
               className="w-full p-4 rounded-lg bg-gray-800 text-white text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -362,9 +402,13 @@ ${financialSummary.recentTransactions.map(t =>
             </div>
           )}
           
-          {response && (
-            <div className="mt-6 mb-20">
-              <h2 className="text-lg mb-2 text-blue-300">Respon AI:</h2>
+          {/* Menampilkan animasi mengetik saat loading */}
+          {loading && <TypingAnimation />}
+          
+          {/* Menampilkan respons AI */}
+          {!loading && response && (
+            <div className="mt-[-50px] mb-20">
+              <h2 className="text-lg mb-2 text-blue-300">Jawab AI:</h2>
               <div className="p-6 bg-gray-800 rounded-lg text-sm font-normal whitespace-pre-wrap border-l-4 border-blue-500 max-h-96 overflow-y-auto">
                 {response}
               </div>
