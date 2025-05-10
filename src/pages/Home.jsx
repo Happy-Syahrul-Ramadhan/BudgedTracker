@@ -1248,7 +1248,7 @@ return (
           
           <div className="bg-gray-700 rounded-lg p-4">
             {/* Added filter toggle */}
-            <div className="flex justify-between mb-3 border-b border-gray-600 pb-2">
+            <div className="justify-between mb-3 border-b border-gray-600 pb-2">
               <div className="flex">
                 <button 
                   className={`mr-4 px-3 py-1 rounded-md ${showIncomeCategoryChart ? 'bg-green-900 text-green-300' : 'bg-gray-800 text-gray-300'}`}
@@ -1265,7 +1265,7 @@ return (
               </div>
               
               {/* Added filter toggle switch */}
-              <div className="flex items-center text-xs">
+              <div className="flex items-center justify-center mb-5 text-xs mt-8">
                 <span className={`mr-2 ${useCategoryFilter ? 'text-gray-400' : 'text-gray-200'}`}>Semua</span>
                 <button 
                   className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors ${useCategoryFilter ? 'bg-purple-600' : 'bg-gray-600'}`}
@@ -1275,7 +1275,7 @@ return (
                     className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${useCategoryFilter ? 'translate-x-5' : 'translate-x-1'}`}
                   />
                 </button>
-                <span className={`ml-2 ${useCategoryFilter ? 'text-gray-200' : 'text-gray-400'}`}>Terfilter</span>
+                <span className={`ml-2 ${useCategoryFilter ? 'text-gray-200' : 'text-gray-400'}`}>Filter</span>
               </div>
             </div>
             
