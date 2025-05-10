@@ -16,6 +16,7 @@ const [showAddModal, setShowAddModal] = useState(false);
 const [transactionType, setTransactionType] = useState('');
 // const [showBalance, setShowBalance] = useState(true); // New state for balance visibility
 const [amount, setAmount] = useState('');
+const [displayAmount, setDisplayAmount] = useState(''); // New state for displaying formatted amount
 const [description, setDescription] = useState('');
 const [periodFilter, setPeriodFilter] = useState('3 Hari Terakhir'); // Default to 3 days
 const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 3)).toISOString().split('T')[0]);
@@ -27,6 +28,7 @@ const [lastExcelOperation, setLastExcelOperation] = useState({ type: '', time: n
 const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 const [chartData, setChartData] = useState([]); // State for chart data
 const [transactionCountData, setTransactionCountData] = useState([]); // New state for transaction count data
+const [useCategoryFilter, setUseCategoryFilter] = useState(false); // New state to toggle category filter
 
 // Refs
 const fileInputRef = useRef(null);
@@ -67,6 +69,21 @@ useEffect(() => {
   
   return () => clearInterval(timer);
 }, []);
+
+// Function to format number with commas
+const formatWithCommas = (value) => {
+  if (!value) return '';
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+};
+
+// Handle amount input change with comma formatting
+const handleAmountChange = (e) => {
+  const rawValue = e.target.value.replace(/,/g, ''); // Remove any existing commas
+  if (rawValue === '' || /^\d*$/.test(rawValue)) {
+    setAmount(rawValue); // Store the raw value
+    setDisplayAmount(formatWithCommas(rawValue)); // Format for display
+  }
+};
 
 // Fungsi helper untuk alert dengan styling konsisten
 const showAlert = (options) => {
@@ -372,7 +389,7 @@ useEffect(() => {
     setChartData([]);
     setTransactionCountData([]);
   }
-}, [transactions, periodFilter, startDate, endDate]);
+}, [transactions, periodFilter, startDate, endDate, useCategoryFilter]);
 
 // Update chart data when filtered transactions change
 useEffect(() => {
@@ -383,11 +400,16 @@ useEffect(() => {
     // NEW: Update transaction count data
     const newCountData = prepareTransactionCountData();
     setTransactionCountData(newCountData);
+    
+    // Update category data if using filtered mode
+    if (useCategoryFilter) {
+      prepareCategoryData();
+    }
   } else {
     setChartData([]);
     setTransactionCountData([]);
   }
-}, [filteredTransactions]);
+}, [filteredTransactions, useCategoryFilter]);
 
 // Calculate financial totals
 const calculateTotals = () => {
@@ -453,12 +475,15 @@ const applyDateFilter = () => {
   setFilteredTransactions(filtered);
 };
 
-// Prepare data for category charts
+// Prepare data for category charts - MODIFIED to use either all or filtered transactions
 const prepareCategoryData = () => {
   const incomeByCategory = {};
   const expenseByCategory = {};
   
-  transactions.forEach(transaction => {
+  // Use either filtered transactions or all transactions based on the toggle
+  const dataToUse = useCategoryFilter ? filteredTransactions : transactions;
+  
+  dataToUse.forEach(transaction => {
     if (transaction.type === 'Pemasukan') {
       if (incomeByCategory[transaction.description]) {
         incomeByCategory[transaction.description] += transaction.amount;
@@ -652,10 +677,13 @@ const addTransaction = async () => {
     return;
   }
   
+  // Convert the amount to a number (removing commas if any)
+  const numericAmount = parseFloat(amount.replace(/,/g, ''));
+  
   const newTransaction = {
     id: Date.now().toString(),
     type: transactionType,
-    amount: parseFloat(amount),
+    amount: numericAmount,
     description,
     date: transactionDate // Now includes full timestamp
   };
@@ -681,6 +709,7 @@ const addTransaction = async () => {
     
     // Reset form
     setAmount('');
+    setDisplayAmount('');
     setDescription('');
     setTransactionDate(getCurrentDateTime()); // Reset to current date/time
     setShowAddModal(false);
@@ -978,6 +1007,9 @@ return (
             onClick={() => {
               setTransactionType('Pemasukan');
               setTransactionDate(getCurrentDateTime()); // Update to current time
+              setAmount('');
+              setDisplayAmount('');
+              setDescription('');
               setShowAddModal(true);
             }}
           >
@@ -989,6 +1021,9 @@ return (
             onClick={() => {
               setTransactionType('Pengeluaran');
               setTransactionDate(getCurrentDateTime()); // Update to current time
+              setAmount('');
+              setDisplayAmount('');
+              setDescription('');
               setShowAddModal(true);
             }}
           >
@@ -1206,97 +1241,122 @@ return (
         </div>
       )}
 
-      {/* Category Breakdown (Simplified) */}
+      {/* Category Breakdown (Simplified) - MODIFIED for sorting and filtering */}
       {(categoryData.income.length > 0 || categoryData.expense.length > 0) && (
         <div className="w-full max-w-[460px] mb-6">
           <h3 className="text-lg font-semibold mb-3 text-purple-300">Breakdown Berdasarkan Kategori</h3>
           
           <div className="bg-gray-700 rounded-lg p-4">
-            <div className="flex mb-3 border-b border-gray-600 pb-2">
-              <button 
-                className={`mr-4 px-3 py-1 rounded-md ${showIncomeCategoryChart ? 'bg-green-900 text-green-300' : 'bg-gray-800 text-gray-300'}`}
-                onClick={() => setShowIncomeCategoryChart(true)}
-              >
-                Pemasukan
-              </button>
-              <button 
-                className={`px-3 py-1 rounded-md ${!showIncomeCategoryChart ? 'bg-red-900 text-red-300' : 'bg-gray-800 text-gray-300'}`}
-                onClick={() => setShowIncomeCategoryChart(false)}
-              >
-                Pengeluaran
-              </button>
+            {/* Added filter toggle */}
+            <div className="flex justify-between mb-3 border-b border-gray-600 pb-2">
+              <div className="flex">
+                <button 
+                  className={`mr-4 px-3 py-1 rounded-md ${showIncomeCategoryChart ? 'bg-green-900 text-green-300' : 'bg-gray-800 text-gray-300'}`}
+                  onClick={() => setShowIncomeCategoryChart(true)}
+                >
+                  Pemasukan
+                </button>
+                <button 
+                  className={`px-3 py-1 rounded-md ${!showIncomeCategoryChart ? 'bg-red-900 text-red-300' : 'bg-gray-800 text-gray-300'}`}
+                  onClick={() => setShowIncomeCategoryChart(false)}
+                >
+                  Pengeluaran
+                </button>
+              </div>
+              
+              {/* Added filter toggle switch */}
+              <div className="flex items-center text-xs">
+                <span className={`mr-2 ${useCategoryFilter ? 'text-gray-400' : 'text-gray-200'}`}>Semua</span>
+                <button 
+                  className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors ${useCategoryFilter ? 'bg-purple-600' : 'bg-gray-600'}`}
+                  onClick={() => setUseCategoryFilter(!useCategoryFilter)}
+                >
+                  <span 
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${useCategoryFilter ? 'translate-x-5' : 'translate-x-1'}`}
+                  />
+                </button>
+                <span className={`ml-2 ${useCategoryFilter ? 'text-gray-200' : 'text-gray-400'}`}>Terfilter</span>
+              </div>
             </div>
             
-            {/* Chart section (simplified bar chart) */}
+            {/* Chart section (simplified bar chart) - MODIFIED with sorting */}
             <div className="flex flex-col">
               {showIncomeCategoryChart && categoryData.income.length > 0 ? (
                 <>
-                  <h4 className="text-sm font-medium mb-3 text-gray-300">Detail Pemasukan</h4>
+                  <h4 className="text-sm font-medium mb-3 text-gray-300">
+                    Detail Pemasukan {useCategoryFilter ? '(Periode Terfilter)' : '(Semua Periode)'}
+                  </h4>
                   <div className="space-y-3">
-                    {categoryData.income.map((entry, index) => {
-                      // Calculate percentage of total income
-                      const totalIncomeValue = categoryData.income.reduce((sum, item) => sum + item.value, 0);
-                      const percentage = Math.round((entry.value / totalIncomeValue) * 100);
-                      
-                      return (
-                        <div key={index} className="space-y-1">
-                          <div className="flex justify-between items-center">
-                            <div className="flex items-center">
+                    {categoryData.income
+                      .sort((a, b) => b.value - a.value) // Sort from largest to smallest
+                      .map((entry, index) => {
+                        // Calculate percentage of total income
+                        const totalIncomeValue = categoryData.income.reduce((sum, item) => sum + item.value, 0);
+                        const percentage = Math.round((entry.value / totalIncomeValue) * 100);
+                        
+                        return (
+                          <div key={index} className="space-y-1">
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center">
+                                <div 
+                                  className="w-3 h-3 rounded-full mr-2" 
+                                  style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                                ></div>
+                                <span className="text-sm">{entry.name}</span>
+                              </div>
+                              <div className="flex items-center">
+                                <span className="text-sm mr-2">{formatCurrency(entry.value)}</span>
+                                <span className="text-xs text-gray-400">({percentage}%)</span>
+                              </div>
+                            </div>
+                            <div className="w-full bg-gray-600 rounded-full h-2">
                               <div 
-                                className="w-3 h-3 rounded-full mr-2" 
-                                style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                                className="bg-green-500 h-2 rounded-full" 
+                                style={{ width: `${percentage}%` }}
                               ></div>
-                              <span className="text-sm">{entry.name}</span>
-                            </div>
-                            <div className="flex items-center">
-                              <span className="text-sm mr-2">{formatCurrency(entry.value)}</span>
-                              <span className="text-xs text-gray-400">({percentage}%)</span>
                             </div>
                           </div>
-                          <div className="w-full bg-gray-600 rounded-full h-2">
-                            <div 
-                              className="bg-green-500 h-2 rounded-full" 
-                              style={{ width: `${percentage}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                   </div>
                 </>
               ) : !showIncomeCategoryChart && categoryData.expense.length > 0 ? (
                 <>
-                  <h4 className="text-sm font-medium mb-3 text-gray-300">Detail Pengeluaran</h4>
+                  <h4 className="text-sm font-medium mb-3 text-gray-300">
+                    Detail Pengeluaran {useCategoryFilter ? '(Periode Terfilter)' : '(Semua Periode)'}
+                  </h4>
                   <div className="space-y-3">
-                    {categoryData.expense.map((entry, index) => {
-                      // Calculate percentage of total expense
-                      const totalExpenseValue = categoryData.expense.reduce((sum, item) => sum + item.value, 0);
-                      const percentage = Math.round((entry.value / totalExpenseValue) * 100);
-                      
-                      return (
-                        <div key={index} className="space-y-1">
-                          <div className="flex justify-between items-center">
-                            <div className="flex items-center">
+                    {categoryData.expense
+                      .sort((a, b) => b.value - a.value) // Sort from largest to smallest
+                      .map((entry, index) => {
+                        // Calculate percentage of total expense
+                        const totalExpenseValue = categoryData.expense.reduce((sum, item) => sum + item.value, 0);
+                        const percentage = Math.round((entry.value / totalExpenseValue) * 100);
+                        
+                        return (
+                          <div key={index} className="space-y-1">
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center">
+                                <div 
+                                  className="w-3 h-3 rounded-full mr-2" 
+                                  style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                                ></div>
+                                <span className="text-sm">{entry.name}</span>
+                              </div>
+                              <div className="flex items-center">
+                                <span className="text-sm mr-2">{formatCurrency(entry.value)}</span>
+                                <span className="text-xs text-gray-400">({percentage}%)</span>
+                              </div>
+                            </div>
+                            <div className="w-full bg-gray-600 rounded-full h-2">
                               <div 
-                                className="w-3 h-3 rounded-full mr-2" 
-                                style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                                className="bg-red-500 h-2 rounded-full" 
+                                style={{ width: `${percentage}%` }}
                               ></div>
-                              <span className="text-sm">{entry.name}</span>
-                            </div>
-                            <div className="flex items-center">
-                              <span className="text-sm mr-2">{formatCurrency(entry.value)}</span>
-                              <span className="text-xs text-gray-400">({percentage}%)</span>
                             </div>
                           </div>
-                          <div className="w-full bg-gray-600 rounded-full h-2">
-                            <div 
-                              className="bg-red-500 h-2 rounded-full" 
-                              style={{ width: `${percentage}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                   </div>
                 </>
               ) : (
@@ -1359,6 +1419,9 @@ return (
               className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg flex items-center justify-center mx-auto"
               onClick={() => {
                 setTransactionType('Pemasukan');
+                setAmount('');
+                setDisplayAmount('');
+                setDescription('');
                 setShowAddModal(true);
               }}
             >
@@ -1370,7 +1433,7 @@ return (
       </div>
     </div>
 
-    {/* Modal for adding transaction */}
+    {/* Modal for adding transaction - MODIFIED for comma formatting */}
     {showAddModal && (
       <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
         <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
@@ -1383,11 +1446,11 @@ return (
             <div className="relative">
               <span className="absolute left-3 top-2 text-gray-400">Rp</span>
               <input 
-                type="number" 
+                type="text" 
                 className="w-full bg-gray-700 text-gray-200 p-2 pl-9 rounded border border-gray-600"
                 placeholder="0"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                value={displayAmount} 
+                onChange={handleAmountChange}
               />
             </div>
           </div>
@@ -1417,7 +1480,12 @@ return (
           <div className="flex justify-end space-x-3">
             <button 
               className="px-4 py-2 bg-gray-700 text-gray-300 rounded hover:bg-gray-600"
-              onClick={() => setShowAddModal(false)}
+              onClick={() => {
+                setShowAddModal(false);
+                setAmount('');
+                setDisplayAmount('');
+                setDescription('');
+              }}
             >
               Batal
             </button>
@@ -1455,6 +1523,7 @@ return (
               <p>9. Perhatikan grafik multi-line untuk membandingkan tren pemasukan dan pengeluaran</p>
               <p>10. Lihat grafik bar untuk melihat jumlah transaksi per hari</p>
               <p>11. Filter default menampilkan 3 hari terakhir, Anda dapat mengubahnya sesuai kebutuhan</p>
+              <p>12. Toggle filter di bagian kategori untuk melihat data kategori berdasarkan period filter</p>
             </div>
           `,
           icon: 'info',
