@@ -18,8 +18,8 @@ const [transactionType, setTransactionType] = useState('');
 const [amount, setAmount] = useState('');
 const [displayAmount, setDisplayAmount] = useState(''); // New state for displaying formatted amount
 const [description, setDescription] = useState('');
-const [periodFilter, setPeriodFilter] = useState('3 Hari Terakhir'); // Default to 3 days
-const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 3)).toISOString().split('T')[0]);
+const [periodFilter, setPeriodFilter] = useState('Minggu ini'); // Changed default to 7 days
+const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0]); // Changed to 7 days ago
 const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
 const [filteredTransactions, setFilteredTransactions] = useState([]);
 const [categoryData, setCategoryData] = useState({ income: [], expense: [] });
@@ -296,7 +296,7 @@ useEffect(() => {
   }
 }, [transactions, initialLoadComplete]);
 
-// Prepare data for multi-line chart - showing 3 days by default
+// Prepare data for multi-line chart - showing 7 days by default
 const prepareChartData = () => {
   if (filteredTransactions.length === 0) return [];
   
@@ -433,14 +433,7 @@ const applyDateFilter = () => {
   if (periodFilter !== 'Semua') {
     const today = new Date();
     
-    if (periodFilter === '3 Hari Terakhir') {
-      // Last 3 days
-      const threeDaysAgo = new Date(today);
-      threeDaysAgo.setDate(today.getDate() - 3);
-      threeDaysAgo.setHours(0, 0, 0, 0);
-      
-      filtered = filtered.filter(t => new Date(t.date) >= threeDaysAgo);
-    } else if (periodFilter === 'Minggu ini') {
+    if (periodFilter === 'Minggu ini') {
       // Start of the week (Monday)
       const startOfWeek = new Date(today);
       startOfWeek.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1));
@@ -1043,11 +1036,10 @@ return (
             value={periodFilter}
             onChange={(e) => setPeriodFilter(e.target.value)}
           >
-            <option value="3 Hari Terakhir">3 Hari Terakhir</option>
-            <option value="Semua">Semua</option>
             <option value="Minggu ini">Minggu ini</option>
             <option value="Bulan ini">Bulan ini</option>
             <option value="Tahun ini">Tahun ini</option>
+            <option value="Semua">Semua</option>
             <option value="Kustom">Kustom</option>
           </select>
         </div>
@@ -1522,7 +1514,7 @@ return (
               <p>8. Gunakan tombol 'Reset Semua Data' untuk menghapus seluruh data transaksi</p>
               <p>9. Perhatikan grafik multi-line untuk membandingkan tren pemasukan dan pengeluaran</p>
               <p>10. Lihat grafik bar untuk melihat jumlah transaksi per hari</p>
-              <p>11. Filter default menampilkan 3 hari terakhir, Anda dapat mengubahnya sesuai kebutuhan</p>
+              <p>11. Filter default menampilkan 7 hari terakhir, Anda dapat mengubahnya sesuai kebutuhan</p>
               <p>12. Toggle filter di bagian kategori untuk melihat data kategori berdasarkan period filter</p>
             </div>
           `,
