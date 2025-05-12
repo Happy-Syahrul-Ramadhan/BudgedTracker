@@ -434,12 +434,12 @@ const applyDateFilter = () => {
     const today = new Date();
     
     if (periodFilter === 'Minggu ini') {
-      // Start of the week (Monday)
-      const startOfWeek = new Date(today);
-      startOfWeek.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1));
-      startOfWeek.setHours(0, 0, 0, 0);
+      // Changed to last 7 days instead of start of week
+      const last7Days = new Date(today);
+      last7Days.setDate(today.getDate() - 7);
+      last7Days.setHours(0, 0, 0, 0);
       
-      filtered = filtered.filter(t => new Date(t.date) >= startOfWeek);
+      filtered = filtered.filter(t => new Date(t.date) >= last7Days);
     } else if (periodFilter === 'Bulan ini') {
       // Start of the month
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
