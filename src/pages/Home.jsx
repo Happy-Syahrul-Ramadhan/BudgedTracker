@@ -1,13 +1,11 @@
-// Home.jsx with Reset Data, Delete Transaction, MultiLine Chart and Timestamp Features
 import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/navbar/NavbarBottom';
 import { ArrowUpIcon, ArrowDownIcon, ChartBarIcon, CreditCardIcon, CalendarIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/solid';
-import * as XLSX from 'xlsx'; // Import SheetJS
-import Swal from 'sweetalert2'; // Import SweetAlert2
+import * as XLSX from 'xlsx'; 
+import Swal from 'sweetalert2'; 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts'; // Import Recharts components
 
 const Home = () => {
-  // State management
 const [transactions, setTransactions] = useState([]);
 const [balance, setBalance] = useState(0);
 const [income, setIncome] = useState(0);
@@ -146,7 +144,6 @@ const saveToIndexedDB = async (transactionsData) => {
     
     return new Promise((resolve, reject) => {
       transaction.oncomplete = () => {
-        console.log("All transactions saved to IndexedDB");
         resolve(true);
       };
       
@@ -160,9 +157,8 @@ const saveToIndexedDB = async (transactionsData) => {
     // Jika gagal menyimpan ke IndexedDB, tetap simpan ke localStorage
     try {
       localStorage.setItem('transactions', JSON.stringify(transactionsData));
-      console.log("Fallback: Data saved to localStorage");
     } catch (localError) {
-      console.error("Error saving to localStorage:", localError);
+      console.error("Error saving to data:", localError);
     }
     return false;
   }
@@ -178,7 +174,6 @@ const loadFromIndexedDB = async () => {
     
     return new Promise((resolve, reject) => {
       request.onsuccess = (event) => {
-        console.log("Transactions loaded from IndexedDB:", event.target.result);
         resolve(event.target.result || []);
       };
       
@@ -197,14 +192,12 @@ const loadFromIndexedDB = async () => {
 useEffect(() => {
   const loadData = async () => {
     try {
-      console.log("Attempting to load data...");
       
       // Try to load from IndexedDB first
       let loadedTransactions = [];
       try {
         const indexedDBData = await loadFromIndexedDB();
         if (indexedDBData && indexedDBData.length > 0) {
-          console.log("Data loaded from IndexedDB:", indexedDBData);
           loadedTransactions = indexedDBData;
         }
       } catch (indexedDBError) {
@@ -256,21 +249,16 @@ useEffect(() => {
   if (!initialLoadComplete) return; // Skip initial render
   
   if (transactions.length > 0) {
-    console.log("Saving transactions:", transactions);
     
     // Save to both storages for redundancy
     try {
       localStorage.setItem('transactions', JSON.stringify(transactions));
-      console.log("Data saved to localStorage");
     } catch (error) {
       console.error("Error saving to localStorage:", error);
     }
     
     saveToIndexedDB(transactions)
       .then(success => {
-        if (success) {
-          console.log("Data successfully saved to IndexedDB");
-        }
       })
       .catch(error => {
         console.error("Error in IndexedDB save:", error);
@@ -688,14 +676,12 @@ const addTransaction = async () => {
     // Immediately save to localStorage for redundancy
     try {
       localStorage.setItem('transactions', JSON.stringify(updatedTransactions));
-      console.log("Transaction saved to localStorage");
     } catch (localStorageError) {
       console.error("Error saving to localStorage:", localStorageError);
     }
     
     // Save to IndexedDB
     const dbSaveResult = await saveToIndexedDB(updatedTransactions);
-    console.log("IndexedDB save result:", dbSaveResult);
     
     // Update state AFTER saving to storage to ensure consistency
     setTransactions(updatedTransactions);
