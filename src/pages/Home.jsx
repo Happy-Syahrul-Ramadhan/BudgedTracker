@@ -925,7 +925,7 @@ return (
           <div className="grid grid-cols-2 gap-3 mb-3">
             <button 
               className="bg-blue-600 hover:bg-blue-700 transition-colors p-3 rounded-lg flex flex-col items-center text-white"
-              onClick={handleImportClick}
+              disabled onClick={handleImportClick}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -934,7 +934,7 @@ return (
             </button>
             <button 
               className="bg-green-600 hover:bg-green-700 transition-colors p-3 rounded-lg flex flex-col items-center text-white"
-              onClick={exportToExcel}
+              disabled onClick={exportToExcel}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
