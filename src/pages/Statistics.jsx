@@ -60,7 +60,6 @@ const Statistics = () => {
       
       if (savedTransactions) {
         loadedTransactions = JSON.parse(savedTransactions);
-        console.log("Data loaded from localStorage:", loadedTransactions);
       } else {
         // If not in localStorage, try IndexedDB as fallback
         try {
@@ -207,7 +206,6 @@ const Statistics = () => {
     };
 
     setFinancialSummary(summary);
-    console.log("Financial summary created:", summary);
   };
 
   // Format currency for display
