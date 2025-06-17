@@ -29,11 +29,12 @@ This project uses **React** and **Vite** to create a fun and interactive budget 
 
 3. **update API KEY**:
    
+```bash
 /my-react-app
 │
 ├── /src
 │   ├── /pages
-│   │   ├── statistics.jsx   # Contains the API fetch and display logic
+│   │   ├── statistics.jsx  # Contains the API fetch and display logic
 │   ├── App.js              # Main application component
 │   ├── index.js            # Main entry point for the React app
 │   └── /assets             # (Optional) Folder for static assets (images, icons, etc.)
