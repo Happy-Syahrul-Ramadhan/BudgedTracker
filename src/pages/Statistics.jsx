@@ -272,7 +272,7 @@ ${financialSummary.recentTransactions.map(t =>
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer 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'
+          'Authorization': 'Bearer YOUR-API-KEY'
         },
         body: JSON.stringify({
           model: 'llama3-8b-8192',
