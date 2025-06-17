@@ -41,7 +41,8 @@ This project uses **React** and **Vite** to create a fun and interactive budget 
 ├── package.json            # NPM/Yarn dependencies and scripts
 └── .gitignore              # Git ignore file
 
-```bash
+update your API KEY :
+
    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
