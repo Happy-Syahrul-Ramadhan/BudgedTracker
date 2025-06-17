@@ -1,8 +1,16 @@
-# React + Vite
+# Budget AI - A Fun Project for Financial Decisions
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project uses **React** and **Vite** to create a fun and interactive budget tracking application. It leverages AI to help you manage your finances and make smarter decisions.
 
-Currently, two official plugins are available:
+## Technologies Used:
+- **React**: A JavaScript library for building user interfaces.
+- **Vite**: A fast, opinionated web build tool.
+- **ESLint**: A tool for identifying and fixing problems in JavaScript code.
+  
+## Getting Started
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+1. **Clone the repository**:
+
+   ```bash
+   git clone <your-repository-url>
+   cd <your-project-folder>
