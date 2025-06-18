@@ -1,4 +1,4 @@
-# Budget AI - A Fun Project for Financial Decisions
+# Budget AI - A Fun Project for Financial Decisions.
 
 This project uses **React** and **Vite** to create a fun and interactive budget tracking application. It leverages AI to help you manage your finances and make smarter decisions.
 
