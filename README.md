@@ -1,4 +1,3 @@
-<div align='center'>
 # BUDGETTRACKER
 
 Empower Smarter Finances Through AI-Driven Insights
@@ -18,7 +17,7 @@ Empower Smarter Finances Through AI-Driven Insights
 ![React](https://img.shields.io/badge/React-blue?style=flat-square)
 ![Vite](https://img.shields.io/badge/Vite-green?style=flat-square)
 ![ESLint](https://img.shields.io/badge/ESLint-purple?style=flat-square)
-</div>
+
 # Budget AI - A Fun Project for Financial Decisions.
 
 This project uses **React** and **Vite** to create a fun and interactive budget tracking application. It leverages AI to help you manage your finances and make smarter decisions.
