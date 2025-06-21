@@ -1,4 +1,4 @@
-<div alighn='center'>
+<div align='center'>
 # BUDGETTRACKER
 
 Empower Smarter Finances Through AI-Driven Insights
