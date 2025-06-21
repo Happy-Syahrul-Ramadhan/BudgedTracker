@@ -2,24 +2,21 @@
 
 Empower Smarter Finances Through AI-Driven Insights
 
-![Last Commit](https://img.shields.io/github/last-commit/your-username/your-repository?style=flat-square)
-![JavaScript](https://img.shields.io/github/languages/top/your-username/your-repository?style=flat-square)
-![Languages](https://img.shields.io/github/languages/count/your-username/your-repository?style=flat-square)
+![Last Commit](https://img.shields.io/github/last-commit/Happy-Syahrul-Ramadhan/BudgedTracker?style=flat-square)
+![JavaScript](https://img.shields.io/github/languages/top/Happy-Syahrul-Ramadhan/BudgedTracker?style=flat-square)
+![Languages](https://img.shields.io/github/languages/count/Happy-Syahrul-Ramadhan/BudgedTracker?style=flat-square)
 
 ## Built with the tools and technologies:
 
 ![JSON](https://img.shields.io/badge/JSON-black?style=flat-square)
-![Markdown](https://img.shields.io/badge/Markdown-black?style=flat-square)
 ![npm](https://img.shields.io/badge/npm-orange?style=flat-square)
 ![Autoprefixer](https://img.shields.io/badge/Autoprefixer-red?style=flat-square)
 ![PostCSS](https://img.shields.io/badge/PostCSS-lightgrey?style=flat-square)
 ![Prettier](https://img.shields.io/badge/Prettier-f3a?style=flat-square)
 ![JavaScript](https://img.shields.io/badge/JavaScript-yellow?style=flat-square)
 ![React](https://img.shields.io/badge/React-blue?style=flat-square)
-![Docker](https://img.shields.io/badge/Docker-blue?style=flat-square)
 ![Vite](https://img.shields.io/badge/Vite-green?style=flat-square)
 ![ESLint](https://img.shields.io/badge/ESLint-purple?style=flat-square)
-![Swiper](https://img.shields.io/badge/Swiper-lightblue?style=flat-square)
 
 # Budget AI - A Fun Project for Financial Decisions.
 
